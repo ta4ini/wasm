@@ -91,9 +91,11 @@ pub fn get_data_from_excel(buffer: Vec<u8>, column_str: &str) -> String {
             // println!("{}", r.rows().len());
             for row in r.rows() {
 
+                let row_length = row.len();
+
                 if find_head_row {
                     let mut row_data = HashMap::new();
-                    for row_idx in 0..row.len() {
+                    for row_idx in 0..row_length {
                         if let Some(key) = find_key_for_value(&column_codes, row_idx){
                             row_data.insert(key, row[row_idx].to_string());
                         }
@@ -104,9 +106,9 @@ pub fn get_data_from_excel(buffer: Vec<u8>, column_str: &str) -> String {
                     continue;
                 }
 
-                if !find_head_row && row.len() >= column_codes.len(){
+                if !find_head_row && row_length >= column_codes.len(){
                     let mut find_cell_count = 0;
-                    for row_idx in 0..row.len() {
+                    for row_idx in 0..row_length {
                         if column_codes.contains_key(&row[row_idx].to_string()){
                             column_codes.insert(row[row_idx].to_string(), row_idx);
                             find_cell_count = find_cell_count + 1; 

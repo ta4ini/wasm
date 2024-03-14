@@ -1,0 +1,14 @@
+{
+  "name": "jsonfromxlsx",
+  "version": "0.1.0",
+  "files": [
+    "jsonfromxlsx_bg.wasm",
+    "jsonfromxlsx.js",
+    "jsonfromxlsx.d.ts"
+  ],
+  "module": "jsonfromxlsx.js",
+  "types": "jsonfromxlsx.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

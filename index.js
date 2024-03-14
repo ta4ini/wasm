@@ -1,6 +1,6 @@
 // Import our outputted wasm ES6 module
 // Which, export default's, an initialization function
-import init, {hello_str, get_data_from_excel} from "./pkg/test3.js";
+import init, { get_data_from_excel} from "./pkg/jsonfromxlsx.js";
 
 const runWasm = async () => {
     await init()
@@ -11,7 +11,7 @@ const runWasm = async () => {
 //   const addResult = helloWorld.add(24, 24);
 
   // Set the result onto the body
-   document.body.querySelector('.table_body').innerHTML = hello_str()
+   //document.body.querySelector('.table_body').innerHTML = hello_str()
 
    const input = document.querySelector(".excel_sel");
    const button = document.querySelector('.submit_btn');
@@ -29,7 +29,7 @@ const runWasm = async () => {
         let array = new Uint8Array(reader.result),
         binaryString = String.fromCharCode.apply(null, array);
 
-        console.log(binaryString)
+        // console.log(binaryString)
         let res = get_data_from_excel(array, "1|2|3|4|5|6");
         console.log(res)
       };
@@ -41,18 +41,5 @@ const runWasm = async () => {
       
    })
 };
+
 runWasm();
-
-//1700-1900
-
-// let tr = ''
-// for(let i=0; i<10000; i++){
-//     tr += '<tr>'
-//     tr+=`<td>${i+1}</td>`
-//     for(let j=0; j<30; j++){
-//         tr+='<td>test</td>'
-//     }
-//     tr += '</tr>'
-// }
-
-// document.body.querySelector('.table_body').innerHTML = tr

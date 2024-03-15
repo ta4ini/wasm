@@ -1,7 +1,7 @@
 // The wasm-pack uses wasm-bindgen to build and generate JavaScript binding file.
 // Import the wasm-bindgen crate.
 use wasm_bindgen::prelude::*;
-use std::collections::HashMap;
+use std::{borrow::Borrow, collections::HashMap};
 
 use calamine::{open_workbook, open_workbook_from_rs, Reader, Xlsx};
 use serde::{Deserialize, Serialize};
@@ -51,39 +51,38 @@ fn find_key_for_value(map: &HashMap<String, usize>, value: usize) -> Option<Stri
 }
 
 #[wasm_bindgen]
-pub fn get_data_from_excel(buffer: Vec<u8>, column_str: &str) -> String {
+pub fn get_data_from_excel(buffer: Vec<u8>, data: String) -> String {
 
-    // if path.is_empty() || column_str.is_empty() {
-    //     return String::new();
-    // }
+    let models: Vec<Model> = serde_json::from_str(&data).unwrap();
 
-    let mut column_codes: HashMap<String, usize> = HashMap::new();
-    column_str.split('|').for_each(|code| {
-        column_codes.insert(code.to_string(), 0);
-    });
-
-    if column_codes.is_empty(){
-        return String::new();
+    if models.last().is_none() {
+        return String::from("");
     }
 
     let mut excel_data_array: Vec<ExcelData> = Vec::new();
 
-
-    // let string = "foo";
-    // println!("{:?}", string.as_bytes().to_vec());
-
-    // let f = File::open("test.xlsx").unwrap();
-    // let mut reader = BufReader::new(f);
-    // let mut buffer = Vec::new();
-
-    // // Read file into vector.
-    // reader.read_to_end(&mut buffer).unwrap();
     let mut excel: Xlsx<_> = open_workbook_from_rs(std::io::Cursor::new(buffer)).unwrap();
 
     //let mut excel: Xlsx<_> = open_workbook(path).unwrap();
     for sheet_name in excel.sheet_names(){
         
-        println!("{}", sheet_name);
+        let model = models.iter().find(|m| m.sheet_name == sheet_name).unwrap();
+
+        if model.sheet_name.is_empty() || model.keys.is_empty() {
+            continue;
+        }
+
+        let mut column_codes: HashMap<String, usize> = HashMap::new();
+        
+        for (key, val) in &model.keys {
+            column_codes.insert(key.to_string(), 0);
+        }
+
+        if column_codes.is_empty(){
+            continue;
+        }
+
+        //excel_data_array.push(ExcelData { sheet_name: "g".to_string(), rows: Vec::new() });
         
         if let Ok(r) = excel.worksheet_range(&sheet_name){
             let mut rows: Vec<HashMap<String,String>> = Vec::new();
@@ -97,7 +96,13 @@ pub fn get_data_from_excel(buffer: Vec<u8>, column_str: &str) -> String {
                     let mut row_data = HashMap::new();
                     for row_idx in 0..row_length {
                         if let Some(key) = find_key_for_value(&column_codes, row_idx){
-                            row_data.insert(key, row[row_idx].to_string());
+                            row_data.insert(model.keys.get(&key).unwrap().to_string(), row[row_idx].to_string());
+                        }
+                    }
+
+                    if !model.row_extension.is_empty(){
+                        for (key, val) in &model.row_extension{
+                            row_data.insert(key.to_string(), val.to_string());
                         }
                     }
 
@@ -124,4 +129,32 @@ pub fn get_data_from_excel(buffer: Vec<u8>, column_str: &str) -> String {
     }
 
     serde_json::to_string(&excel_data_array).unwrap()
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Model{
+    sheet_name: String,
+    doc_list_id: u32,
+    keys: HashMap<String,String>,
+    row_extension: HashMap<String,String>
+}
+
+#[wasm_bindgen]
+pub fn test_struct(m: String) -> String {
+    let mut test: String = String::from("");
+
+    let model: Vec<Model> = serde_json::from_str(&m).unwrap();
+
+    for m in model{
+        test.push_str(&m.doc_list_id.to_string());
+        test.push_str(&m.sheet_name);
+
+        for (key, val) in m.keys{
+            test.push_str(&key);
+            test.push_str(&val);
+        }
+    }
+
+    test.to_string()
 }

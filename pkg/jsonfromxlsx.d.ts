@@ -21,10 +21,15 @@ export function hello(name: string): any;
 export function hello_str(): string;
 /**
 * @param {Uint8Array} buffer
-* @param {string} column_str
+* @param {string} data
 * @returns {string}
 */
-export function get_data_from_excel(buffer: Uint8Array, column_str: string): string;
+export function get_data_from_excel(buffer: Uint8Array, data: string): string;
+/**
+* @param {string} m
+* @returns {string}
+*/
+export function test_struct(m: string): string;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
@@ -35,6 +40,7 @@ export interface InitOutput {
   readonly hello: (a: number, b: number) => number;
   readonly hello_str: (a: number) => void;
   readonly get_data_from_excel: (a: number, b: number, c: number, d: number, e: number) => void;
+  readonly test_struct: (a: number, b: number, c: number) => void;
   readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
   readonly __wbindgen_malloc: (a: number, b: number) => number;

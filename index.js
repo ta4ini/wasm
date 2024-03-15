@@ -1,6 +1,6 @@
 // Import our outputted wasm ES6 module
 // Which, export default's, an initialization function
-import init, { get_data_from_excel} from "./pkg/jsonfromxlsx.js";
+import init, { get_data_from_excel } from "./pkg/jsonfromxlsx.js";
 
 const runWasm = async () => {
     await init()
@@ -16,6 +16,16 @@ const runWasm = async () => {
    const input = document.querySelector(".excel_sel");
    const button = document.querySelector('.submit_btn');
    button.addEventListener('click', (e)=>{
+      let struct = JSON.stringify([
+        {
+        sheet_name: "Лист 1",
+        doc_list_id: 305,
+        keys: {'1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'8'}, //key = column number, val = key in model
+        row_extension: {'7':''} //empty data for row
+      }])
+
+      //console.log(test_struct(struct))
+
       let file = input.files[0]
       // console.log(file.webkitRelativePath);
       let reader = new FileReader();
@@ -30,7 +40,7 @@ const runWasm = async () => {
         binaryString = String.fromCharCode.apply(null, array);
 
         // console.log(binaryString)
-        let res = get_data_from_excel(array, "1|2|3|4|5|6");
+        let res = get_data_from_excel(array, struct);
         console.log(res)
       };
 

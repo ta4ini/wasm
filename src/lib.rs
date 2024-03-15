@@ -43,6 +43,7 @@ pub fn hello_str() -> String {
 #[derive(Serialize, Deserialize, Debug)]
 struct ExcelData{
     sheet_name: String,
+    doc_list_id: u32,
     rows: Vec<HashMap<String,String>>
 }
 
@@ -124,7 +125,7 @@ pub fn get_data_from_excel(buffer: Vec<u8>, data: String) -> String {
                 }
             }
 
-            excel_data_array.push(ExcelData { sheet_name, rows });
+            excel_data_array.push(ExcelData { sheet_name, rows, doc_list_id: model.doc_list_id });
         }
     }
 

@@ -40,8 +40,13 @@ const runWasm = async () => {
         binaryString = String.fromCharCode.apply(null, array);
 
         // console.log(binaryString)
+        try{
         let res = get_data_from_excel(array, struct);
         console.log(res)
+        }
+        catch(e){
+          console.error(e)
+        }
       };
 
       reader.onerror = function() {

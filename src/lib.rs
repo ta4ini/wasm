@@ -1,9 +1,7 @@
-// The wasm-pack uses wasm-bindgen to build and generate JavaScript binding file.
-// Import the wasm-bindgen crate.
 use wasm_bindgen::prelude::*;
-use std::{borrow::Borrow, collections::HashMap};
+use std::{collections::HashMap};
 
-use calamine::{open_workbook, open_workbook_from_rs, Reader, Xlsx};
+use calamine::{open_workbook_from_rs, Reader, Xlsx};
 use serde::{Deserialize, Serialize};
 
 // Our Add function
@@ -51,18 +49,25 @@ fn find_key_for_value(map: &HashMap<String, usize>, value: usize) -> Option<Stri
     map.iter().find_map(|(key, &val)| if val == value { Some(key.to_string()) } else { None })
 }
 
-#[wasm_bindgen]
-pub fn get_data_from_excel(buffer: Vec<u8>, data: String) -> String {
+#[wasm_bindgen(catch)]
+pub fn get_data_from_excel(buffer: Vec<u8>, data: String) -> Result<String, JsValue> {
 
-    let models: Vec<Model> = serde_json::from_str(&data).unwrap();
+    let models: Vec<Model> = match serde_json::from_str(&data) 
+    {
+        Ok(result) => result,
+        Err(error) => return Err(JsValue::from_str(&format!("Problem deserialize data: {:?}, error: {:?}", data, error))),
+    };
 
     if models.last().is_none() {
-        return String::from("");
+        return Err(JsValue::from_str("The deserialize data is empty"));
     }
 
     let mut excel_data_array: Vec<ExcelData> = Vec::new();
 
-    let mut excel: Xlsx<_> = open_workbook_from_rs(std::io::Cursor::new(buffer)).unwrap();
+    let mut excel: Xlsx<_> = match open_workbook_from_rs(std::io::Cursor::new(buffer)) {
+        Ok(result) => result,
+        Err(error) => return Err(JsValue::from_str(&format!("Can't open workbook from rs: {:?}", error))),
+    };
 
     //let mut excel: Xlsx<_> = open_workbook(path).unwrap();
     for sheet_name in excel.sheet_names(){
@@ -75,7 +80,7 @@ pub fn get_data_from_excel(buffer: Vec<u8>, data: String) -> String {
 
         let mut column_codes: HashMap<String, usize> = HashMap::new();
         
-        for (key, val) in &model.keys {
+        for (key, _) in &model.keys {
             column_codes.insert(key.to_string(), 0);
         }
 
@@ -129,7 +134,11 @@ pub fn get_data_from_excel(buffer: Vec<u8>, data: String) -> String {
         }
     }
 
-    serde_json::to_string(&excel_data_array).unwrap()
+    match serde_json::to_string(&excel_data_array) {
+        Ok(result)=>Ok(result),
+        Err(error)=>Err(JsValue::from_str(&error.to_string()))
+    }
+    
 }
 
 

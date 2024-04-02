@@ -1,9 +1,10 @@
 // Import our outputted wasm ES6 module
 // Which, export default's, an initialization function
-import init, { get_data_from_excel } from "./pkg/jsonfromxlsx.js";
+import init, { get_data_from_excel, get_data_model_from_excel } from "./pkg/jsonfromxlsx.js";
 
 const runWasm = async () => {
     await init()
+
   // Instantiate our wasm module
 //   const helloWorld = await init("./pkg/test3_bg.wasm");
 
@@ -41,8 +42,11 @@ const runWasm = async () => {
 
         // console.log(binaryString)
         try{
-        let res = get_data_from_excel(array, struct);
-        console.log(res)
+          const start = performance.now();
+          //let res = get_data_from_excel(array, struct);
+          console.log(get_data_model_from_excel(array))
+          const end = performance.now();
+          console.log(`Execution time: ${end - start} ms`);
         }
         catch(e){
           console.error(e)

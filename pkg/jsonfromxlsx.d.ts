@@ -26,6 +26,11 @@ export function hello_str(): string;
 */
 export function get_data_from_excel(buffer: Uint8Array, data: string): string;
 /**
+* @param {Uint8Array} buffer
+* @returns {string}
+*/
+export function get_data_model_from_excel(buffer: Uint8Array): string;
+/**
 * @param {string} m
 * @returns {string}
 */
@@ -40,6 +45,7 @@ export interface InitOutput {
   readonly hello: (a: number, b: number) => number;
   readonly hello_str: (a: number) => void;
   readonly get_data_from_excel: (a: number, b: number, c: number, d: number, e: number) => void;
+  readonly get_data_model_from_excel: (a: number, b: number, c: number) => void;
   readonly test_struct: (a: number, b: number, c: number) => void;
   readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;

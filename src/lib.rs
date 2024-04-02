@@ -1,4 +1,5 @@
 use wasm_bindgen::prelude::*;
+
 use std::{collections::HashMap};
 
 use calamine::{open_workbook_from_rs, Reader, Xlsx};
@@ -149,6 +150,129 @@ struct Model{
     keys: HashMap<String,String>,
     row_extension: HashMap<String,String>
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+struct SheetDescription {
+    sheet_name: String,
+    tables: Vec<Tables>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Tables {
+    name: String,
+    cells: Vec<Cell>,
+    range: Range,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Range {
+    start_row: u32,
+    start_col: u32,
+    end_row: u32,
+    end_col: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Cell {
+    name: String,
+    row: u32,
+    col: u32,
+}
+
+fn set_range(range: &Range, cell: &Cell) -> Range {
+    let start_row = if range.start_row <= cell.row { range.start_row } else { cell.row  };
+    let start_col = if range.start_col <= cell.col { range.start_col } else { cell.col };
+    let end_col = if range.end_col <= cell.col { cell.col } else { range.start_col };
+    let end_row = if range.end_row <= cell.row { cell.row } else { range.start_row };
+
+    return Range {
+        start_row,
+        start_col,
+        end_col,
+        end_row,
+    };
+}
+
+
+#[wasm_bindgen(catch)]
+pub fn get_data_model_from_excel(buffer: Vec<u8>) -> Result<String, JsValue> {
+
+    let mut sheet_description_array: Vec<SheetDescription> = Vec::new();
+
+    let mut excel: Xlsx<_> = match open_workbook_from_rs(std::io::Cursor::new(buffer)) {
+        Ok(result) => result,
+        Err(error) => return Err(JsValue::from_str(&format!("Can't open workbook from rs: {:?}", error))),
+    };
+
+    // let mut excel: Xlsx<_> = open_workbook(path).unwrap();
+    for sheet_name in excel.sheet_names() {
+        let mut sheet_description = SheetDescription {
+            sheet_name,
+            tables: Vec::<Tables>::new(),
+        };
+
+        if let Ok(r) = excel.worksheet_range(&sheet_description.sheet_name) {
+            let mut tables = Vec::<Tables>::new();
+
+            let mut row_index: u32 = 0;
+            for row in r.rows() {
+                row_index = row_index + 1;
+
+                let row_length = row.len();
+
+                for col_idx in 0..row_length {
+                    if row[col_idx].to_string().contains("].[") {
+                        let row_by_idx = row[col_idx].to_string();
+                        let template_part: Vec<&str> = row_by_idx.split('.').collect();
+                        if template_part.len() == 2 {
+                            let table_name = template_part[0].replace("[", "").replace("]", "");
+                            let col_name = template_part[1].replace("[", "").replace("]", "");
+
+                            if let Some(t_find) = tables.iter_mut().find(|t| t.name == table_name) {
+                                let cell = Cell {
+                                    name: col_name,
+                                    row: row_index,
+                                    col: (col_idx + 1) as u32,
+                                };
+
+                                t_find.range = set_range(&t_find.range, &cell);
+                                t_find.cells.push(cell);
+                            } else {
+                                let mut cells: Vec<Cell> = Vec::new();
+                                cells.push(Cell {
+                                    name: col_name,
+                                    row: row_index,
+                                    col: (col_idx + 1) as u32,
+                                });
+                                tables.push(Tables {
+                                    name: table_name,
+                                    cells,
+                                    range: Range {
+                                        start_row: row_index,
+                                        start_col: (col_idx + 1) as u32,
+                                        end_col: (col_idx + 1) as u32,
+                                        end_row: row_index,
+                                    },
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            sheet_description.tables = tables;
+
+            sheet_description_array.push(sheet_description);
+        }
+    }
+
+    match serde_json::to_string(&sheet_description_array) {
+        Ok(result)=>Ok(result),
+        Err(error)=>Err(JsValue::from_str(&error.to_string()))
+    }
+    
+}
+
 
 #[wasm_bindgen]
 pub fn test_struct(m: String) -> String {
